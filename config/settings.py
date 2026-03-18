@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'users',
-    'network',
+    'network.apps.NetworkConfig',
     'trips',
     'carpool',
     'wallet',
