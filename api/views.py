@@ -60,6 +60,11 @@ def findtrips(request):
             'fare': faredata['fare'],
             'detour': faredata['detour'],
         })
+    print("Pickup:", pickup.id)
+    print("Drop:", drop.id)
+
+    for trip in Trip.objects.all():
+        print("Trip:", trip.id, trip.startnode, "→", trip.endnode)
 
     return Response(data)
 @api_view(['POST'])
@@ -75,7 +80,8 @@ def createoffer(request):
 
     offer = CarpoolOffer.objects.create(
         trip=trip,
-        request=carpoolrequest
+        request=request_obj,
+        fare=fare_data['fare']
     )
 
     return Response({'message': 'Offer created'})
@@ -87,36 +93,40 @@ def acceptoffer(request):
         offer = CarpoolOffer.objects.get(id=offerid)
     except:
         return Response({'error': 'Invalid offer'})
+
     offer.status = 'accepted'
     offer.save()
+
     CarpoolOffer.objects.filter(
         request=offer.request
     ).exclude(id=offer.id).update(status='rejected')
+
     offer.request.status = 'accepted'
     offer.request.save()
 
-    from carpool.models import Wallet, Transaction
-    from network.utility import calculatefare
-
-    passenger = offer.request.passenger
+    rider = offer.request.user   
     driver = offer.trip.driver
 
     pickup = offer.request.pickupnode
-    drop = offer.request.dropnode
+    drop = offer.request.dropoffnode
 
     faredata = calculatefare(offer.trip, pickup, drop)
     fare = faredata['fare']
 
-    pwallet = Wallet.objects.get(user=passenger)
-    if pwallet.balance < fare:
+    rider_wallet, _ = Wallet.objects.get_or_create(user=rider)
+    driver_wallet, _ = Wallet.objects.get_or_create(user=driver)
+
+    if rider_wallet.balance < fare:
         return Response({'error': 'Insufficient balance'})
-    pwallet.balance -= fare
-    pwallet.save()
-    dwallet = Wallet.objects.get(user=driver)
-    dwallet.balance += fare
-    dwallet.save()
+
+    rider_wallet.balance -= fare
+    rider_wallet.save()
+
+    driver_wallet.balance += fare
+    driver_wallet.save()
+
     Transaction.objects.create(
-        user=passenger,
+        user=rider,
         amount=fare,
         type='debit',
         description='Trip payment'
@@ -226,23 +236,7 @@ def drivertrips(request):
         })
 
     return Response(data)
-@api_view(['POST'])
-def addmoney(request):
-    amount = float(request.data.get('amount'))
-    user = request.user
 
-    wallet = Wallet.objects.get(user=user)
-    wallet.balance += amount
-    wallet.save()
-
-    Transaction.objects.create(
-        user=user,
-        amount=amount,
-        type='credit',
-        description='Wallet top-up'
-    )
-
-    return Response({'balance': wallet.balance})
 @api_view(['POST'])
 def addmoney(request):
     amount = request.data.get('amount')
@@ -265,4 +259,28 @@ def addmoney(request):
     return Response({
         'message': 'Money added',
         'balance': wallet.balance
+    })
+@api_view(['POST'])
+def createrequest(request):
+    userid = request.data.get('passenger')
+    pickupid = request.data.get('pickupnode')
+    dropid = request.data.get('dropoffnode')
+
+    try:
+        user = User.objects.get(id=userid)
+        pickup = Node.objects.get(id=pickupid)
+        drop = Node.objects.get(id=dropid)
+    except:
+        return Response({'error': 'Invalid nodes'})
+
+    carpoolrequest = CarpoolRequest.objects.create(
+        passenger=user,  
+        pickupnode=pickup,
+        dropoffnode=drop,
+        status='pending'
+    )
+
+    return Response({
+        'message': 'Request created',
+        'requestid': carpoolrequest.id
     })

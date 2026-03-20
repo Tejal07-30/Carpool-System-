@@ -106,12 +106,42 @@ def calculatefare(trip, pickupnode, dropnode):
 
     newlength = len(newroute)
     detour = newlength - originallength
+    
+    active_passengers = []
+    existing_requests = trip.carpooloffer_set.filter(status='accepted')
+
+    for req in existing_requests:
+        active_passengers.append({
+            "pickup": req.request.pickupnode,
+            "drop": req.request.dropnode
+        })
+
+
+    active_passengers.append({
+        "pickup": pickupnode,
+        "drop": dropnode
+    })
 
     faresum = 0
+    current_passengers = 0
 
-    for i in range(newlength):   
-        passengers = 1           
-        faresum += 1 / passengers
+    for i in range(len(newroute) - 1):
+        current_node = newroute[i]
+
+    
+        for p in active_passengers:
+            if p["pickup"] == current_node:
+                current_passengers += 1
+
+    
+        for p in active_passengers:
+            if p["drop"] == current_node:
+                current_passengers -= 1
+
+        if current_passengers <= 0:
+            current_passengers = 1
+
+        faresum += 1 / current_passengers
 
     fare = PRICEPERHOP * faresum + BASEFEE
 
