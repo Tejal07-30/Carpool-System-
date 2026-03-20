@@ -6,7 +6,7 @@ A backend system designed to make daily commuting easier by connecting riders an
 
 Currently in development
 Core features are implemented and being tested.
-Deployment is ongoing and will be completed soon.
+Deployment is *ongoing* and will be completed soon.
 
 # What This Project Does
 
