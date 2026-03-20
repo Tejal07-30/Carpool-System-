@@ -8,11 +8,21 @@ class Trip(models.Model):
     startnode = models.ForeignKey(Node, related_name='tripstart', on_delete=models.CASCADE)
     endnode = models.ForeignKey(Node, related_name='tripend', on_delete=models.CASCADE)
 
-    max_passengers = models.IntegerField()
-    current_node = models.ForeignKey(Node, null=True, blank=True, on_delete=models.SET_NULL)
+    maxpassengers = models.IntegerField()
+    currentnode = models.ForeignKey(Node, null=True, blank=True, on_delete=models.SET_NULL)
 
     status = models.CharField(max_length=20, default='active')
-    created_at = models.DateTimeField(auto_now_add=True)
+    createdat = models.DateTimeField(auto_now_add=True)
+    STATUS_CHOICES = [
+    ('active', 'Active'),
+    ('completed', 'Completed'),
+    ('cancelled', 'Cancelled'),
+    ]
+    status = models.CharField(
+    max_length=10,
+    choices=STATUS_CHOICES,
+    default='active'
+    )
 
     def save(self, *args, **kwargs):
         isnew = self.pk is None
