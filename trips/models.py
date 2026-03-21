@@ -1,7 +1,6 @@
 from django.db import models
 from users.models import User 
 from network.models import Node 
-from network.utility import findpath
 
 class Trip(models.Model):
     driver = models.ForeignKey(User, on_delete=models.CASCADE)

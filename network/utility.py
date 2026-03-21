@@ -1,8 +1,8 @@
 from collections import deque
 from .models import Edge
 
-
 def findpath(startnode, endnode):
+    from trips.models import TripRoute
     queue = deque([[startnode]])
     visited = set()
 
@@ -24,9 +24,8 @@ def findpath(startnode, endnode):
 
     return None
 def nodeswithinrange(startnode):
-    from collections import deque
-    from .models import Edge
-
+    from trips.models import Trip, TripRoute
+    
     visited = set()
     queue = deque([(startnode, 0)])
 
@@ -44,8 +43,7 @@ def nodeswithinrange(startnode):
 
     return visited
 def reachablenodes(trip):
-    from trips.models import TripRoute
-
+    from trips.models import Trip, TripRoute
     reachable = set()
     remainingroutes = TripRoute.objects.filter(
         trip=trip,
@@ -59,7 +57,6 @@ def reachablenodes(trip):
     return reachable
 def findmatchingtrips(pickupnode, dropnode):
     from trips.models import Trip, TripRoute
-
     matchingtrips = []
 
     trips = Trip.objects.filter(status='active')
@@ -77,9 +74,7 @@ def findmatchingtrips(pickupnode, dropnode):
 
     return matchingtrips
 def calculatefare(trip, pickupnode, dropnode):
-    from trips.models import TripRoute
-    from network.utility import findpath
-
+    from trips.models import Trip, TripRoute
     PRICEPERHOP = 10
     BASEFEE = 20
 
@@ -113,7 +108,7 @@ def calculatefare(trip, pickupnode, dropnode):
     for req in existing_requests:
         active_passengers.append({
             "pickup": req.request.pickupnode,
-            "drop": req.request.dropnode
+            "drop": req.request.dropoffnode
         })
 
 

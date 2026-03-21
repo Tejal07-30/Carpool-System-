@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import updatelocation, findtrips, createoffer, acceptoffer, cancelrequest, driverrequests, driveroffers, canceltrip, drivertrips, addmoney, createrequest
+from .views import updatelocation, findtrips, createoffer, acceptoffer, cancelrequest, driverrequests, driveroffers, canceltrip, drivertrips, addmoney, createrequest, myrequests
 urlpatterns = [
     path('updatelocation/', updatelocation),
     path('findtrips/', findtrips),
@@ -12,4 +12,5 @@ urlpatterns = [
     path('drivertrips/', drivertrips),
     path('addmoney/', addmoney),
     path('createrequest/', createrequest),
+    path('myrequests/', myrequests),
 ]

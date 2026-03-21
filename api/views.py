@@ -5,7 +5,7 @@ from trips.models import Trip, TripRoute
 from network.models import Node
 from network.utility import findmatchingtrips, calculatefare
 from carpool.models import CarpoolOffer, CarpoolRequest, Wallet, Transaction
-
+from django.contrib.auth import get_user_model
 
 @api_view(['POST'])
 def updatelocation(request):
@@ -67,21 +67,22 @@ def findtrips(request):
         print("Trip:", trip.id, trip.startnode, "→", trip.endnode)
 
     return Response(data)
+
 @api_view(['POST'])
 def createoffer(request):
-    tripid = request.data.get('tripid')
     requestid = request.data.get('requestid')
+    tripid = request.data.get('tripid')
 
     try:
+        request_obj = CarpoolRequest.objects.get(id=requestid)
         trip = Trip.objects.get(id=tripid)
-        carpoolrequest = CarpoolRequest.objects.get(id=requestid)
     except:
-        return Response({'error': 'Invalid data'})
+        return Response({'error': 'Invalid request or trip'})
 
-    offer = CarpoolOffer.objects.create(
-        trip=trip,
+    CarpoolOffer.objects.create(
         request=request_obj,
-        fare=fare_data['fare']
+        trip=trip,
+        status='pending',
     )
 
     return Response({'message': 'Offer created'})
@@ -104,7 +105,7 @@ def acceptoffer(request):
     offer.request.status = 'accepted'
     offer.request.save()
 
-    rider = offer.request.user   
+    rider = offer.request.passenger   
     driver = offer.trip.driver
 
     pickup = offer.request.pickupnode
@@ -113,17 +114,17 @@ def acceptoffer(request):
     faredata = calculatefare(offer.trip, pickup, drop)
     fare = faredata['fare']
 
-    rider_wallet, _ = Wallet.objects.get_or_create(user=rider)
-    driver_wallet, _ = Wallet.objects.get_or_create(user=driver)
+    riderwallet, _ = Wallet.objects.get_or_create(user=rider)
+    driverwallet, _ = Wallet.objects.get_or_create(user=driver)
 
-    if rider_wallet.balance < fare:
+    if riderwallet.balance < fare:
         return Response({'error': 'Insufficient balance'})
 
-    rider_wallet.balance -= fare
-    rider_wallet.save()
+    riderwallet.balance -= fare
+    riderwallet.save()
 
-    driver_wallet.balance += fare
-    driver_wallet.save()
+    driverwallet.balance += fare
+    driverwallet.save()
 
     Transaction.objects.create(
         user=rider,
@@ -260,23 +261,35 @@ def addmoney(request):
         'message': 'Money added',
         'balance': wallet.balance
     })
+User = get_user_model()
 @api_view(['POST'])
 def createrequest(request):
-    userid = request.data.get('passenger')
+    userid = request.data.get('userid')
     pickupid = request.data.get('pickupnode')
     dropid = request.data.get('dropoffnode')
 
     try:
         user = User.objects.get(id=userid)
-        pickup = Node.objects.get(id=pickupid)
-        drop = Node.objects.get(id=dropid)
+        pickupnode = Node.objects.get(id=pickupid)
+        dropoffnode = Node.objects.get(id=dropid)
     except:
         return Response({'error': 'Invalid nodes'})
+    pickuproutes = TripRoute.objects.filter(node=pickupnode)
+    droproutes = TripRoute.objects.filter(node=dropoffnode)
+    valid = False
 
+    for p in pickuproutes:
+        for d in droproutes:
+            if p.trip == d.trip and p.order < d.order:
+                valid = True
+                break
+
+    if not valid:
+        return Response({'error': 'Invalid nodes'})
     carpoolrequest = CarpoolRequest.objects.create(
         passenger=user,  
-        pickupnode=pickup,
-        dropoffnode=drop,
+        pickupnode=pickupnode,
+        dropoffnode=dropoffnode,
         status='pending'
     )
 
@@ -284,3 +297,25 @@ def createrequest(request):
         'message': 'Request created',
         'requestid': carpoolrequest.id
     })
+@api_view(['POST'])
+def myrequests(request):
+    userid = request.data.get('userid')
+
+    try:
+        user = User.objects.get(id=userid)
+    except:
+        return Response({'error': 'Invalid user'})
+
+    requests = CarpoolRequest.objects.filter(passenger=user)
+
+    data = []
+    for req in requests:
+        data.append({
+            'requestid': req.id,
+            'pickup': req.pickupnode.name,
+            'drop': req.dropoffnode.name,
+            'status': req.status,
+            'created_at': req.created_at
+        })
+
+    return Response(data)
