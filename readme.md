@@ -4,9 +4,8 @@ A backend system designed to make daily commuting easier by connecting riders an
 
 # Project Status
 
-Currently in development
-Core features are implemented and being tested.
-Deployment is *ongoing* and will be completed soon.
+Deployment: Ongoing
+All core backend features are implemented and tested. Deployment using Docker, Nginx, and cloud hosting is currently in progress.
 
 # What This Project Does
 
@@ -64,10 +63,10 @@ Instead of random ride matching, this system uses a structured route network:
 # Tech Stack Used
 
 * Backend: Django, Django REST Framework
-* Database: PostgreSQL
-* Authentication: Django AllAuth + Google OAuth
-* API Testing: DRF Browsable API
-
+* Database: PostgreSQL (Docker)
+* Server: Gunicorn
+* Reverse Proxy: Nginx
+* Containerization: Docker & Docker Compose
 ---
 
 # Main Modules
