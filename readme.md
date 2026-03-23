@@ -5,7 +5,8 @@ A backend system designed to make daily commuting easier by connecting riders an
 # Project Status
 
 Deployment: Ongoing.
-All core backend features are implemented and tested. Deployment using Docker, Nginx, and cloud hosting is currently in progress.
+(The VPS setup is currently in progress and the approval process is taking some time. It will be completed shortly.)
+All core backend features are implemented and tested.
 
 # What This Project Does
 
