@@ -24,6 +24,7 @@ class CarpoolRequest(models.Model):
 
     status = models.CharField(
         max_length=20,
+        choices=[('pending', 'Pending'), ('confirmed', 'Confirmed'), ('cancelled', 'Cancelled')],
         default='pending'
     )
 
@@ -31,18 +32,20 @@ class CarpoolRequest(models.Model):
 
     def __str__(self):
         return f"{self.passenger} ({self.pickupnode} → {self.dropoffnode})"
+
 class CarpoolOffer(models.Model):
+    
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('accepted', 'Accepted'),
         ('rejected', 'Rejected'),
     ]
-
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE)
     request = models.ForeignKey(CarpoolRequest, on_delete=models.CASCADE)
-
+    fare = models.FloatField(default=0)
+    detour = models.IntegerField(default=0)
     status = models.CharField(
-        max_length=10,
+        max_length=20,
         choices=STATUS_CHOICES,
         default='pending'  
     )
@@ -69,7 +72,7 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.amount} - {self.type}"
-@receiver(post_save, sender=User)
-def createwallet(sender, instance, created, **kwargs):
-    if created:
-        Wallet.objects.create(user=instance)
+    @receiver(post_save, sender=User)
+    def createwallet(sender, instance, created, **kwargs):
+        if created:
+            Wallet.objects.create(user=instance)

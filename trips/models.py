@@ -1,6 +1,7 @@
 from django.db import models
 from users.models import User 
 from network.models import Node 
+from network.utility import findpath
 
 class Trip(models.Model):
     driver = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -8,10 +9,8 @@ class Trip(models.Model):
     endnode = models.ForeignKey(Node, related_name='tripend', on_delete=models.CASCADE)
 
     maxpassengers = models.IntegerField()
-    currentnode = models.ForeignKey(Node, null=True, blank=True, on_delete=models.SET_NULL)
-
-    status = models.CharField(max_length=20, default='active')
-    createdat = models.DateTimeField(auto_now_add=True)
+    currentnode = models.ForeignKey(Node, null=True, blank=True, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
     STATUS_CHOICES = [
     ('active', 'Active'),
     ('completed', 'Completed'),

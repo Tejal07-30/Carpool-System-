@@ -39,8 +39,8 @@ def updatelocation(request):
     })
 @api_view(['POST'])
 def findtrips(request):
-    pickupid = request.data.get('pickupnode')
-    dropid = request.data.get('dropoffnode')
+    pickupid = request.data.get('pickup')
+    dropid = request.data.get('drop')
 
     try:
         pickup = Node.objects.get(id=pickupid)
@@ -57,6 +57,7 @@ def findtrips(request):
             'tripid': trip.id,
             'driver': trip.driver.username,
             'currentnode': trip.currentnode.name,
+            'available_seats': trip.max_passengers - trip.passengers.count(),
             'fare': faredata['fare'],
             'detour': faredata['detour'],
         })
@@ -261,7 +262,7 @@ def addmoney(request):
         'message': 'Money added',
         'balance': wallet.balance
     })
-User = get_user_model()
+    User = get_user_model()
 @api_view(['POST'])
 def createrequest(request):
     userid = request.data.get('userid')
@@ -319,3 +320,78 @@ def myrequests(request):
         })
 
     return Response(data)
+@api_view(['POST'])
+def completetrip(request):
+    tripid = request.data.get('tripid')
+    try:
+        trip = Trip.objects.get(id=tripid)
+    except Trip.DoesNotExist:
+        return Response({"error": "Trip not found"})
+    print("Offers found:", offers.count())
+    print("Trip ID received:", tripid)
+
+    if trip.status != 'active':
+        return Response({"error": "Trip not active"})
+
+    offers = trip.carpoolofferset.filter(status='accepted')
+
+    for offer in offers:
+        passenger = offer.request.passenger
+        fare = offer.fare
+
+        wallet = passenger.wallet
+        if wallet.balance < fare:
+            return Response({
+                "error": f"{passenger.username} has insufficient balance"
+            })
+    for offer in offers:
+        passenger = offer.request.passenger
+        fare = offer.fare
+        passenger.wallet.balance -= fare
+        passenger.wallet.save()
+
+        Transaction.objects.create(
+            user=passenger,
+            trip=trip,
+            amount=fare,
+            type='debit',
+            description='Trip fare'
+        )
+        driverwallet = trip.driver.wallet
+        driverwallet.balance += fare
+        driverwallet.save()
+
+        Transaction.objects.create(
+            user=trip.driver,
+            trip=trip,
+            amount=fare,
+            type='credit',
+            description='Trip earning'
+        )
+
+    trip.status = 'completed'
+    trip.save()
+
+    return Response({"message": "Trip completed successfully"})
+@api_view(['GET'])
+def mywallet(request):
+    wallet = request.user.wallet
+
+    return Response({
+        "balance": wallet.balance
+    })
+@api_view(['GET'])
+def mytransactions(request):
+    transactions = Transaction.objects.filter(user=request.user)
+
+    data = []
+
+    for t in transactions:
+        data.append({
+            "amount": t.amount,
+            "type": t.type,
+            "description": t.description,
+            "date": t.created_at
+        })
+
+    return Response({"transactions": data})

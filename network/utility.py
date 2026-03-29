@@ -1,6 +1,6 @@
 from collections import deque
 from .models import Edge
-
+#Trip and TripRoute were imported in each function individually because of some import error. 
 def findpath(startnode, endnode):
     from trips.models import TripRoute
     queue = deque([[startnode]])
@@ -23,25 +23,27 @@ def findpath(startnode, endnode):
                 queue.append(newpath)
 
     return None
-def nodeswithinrange(startnode):
+def nodeswithinrange(startnode, range):
     from trips.models import Trip, TripRoute
     
     visited = set()
     queue = deque([(startnode, 0)])
-
+    result = set() 
     while queue:
         node, depth = queue.popleft()
 
-        if depth > 2:
+        if depth > range:
             continue
 
-        visited.add(node)
+        result.add(node)
 
         edges = Edge.objects.filter(fromnode=node)
         for edge in edges:
-            queue.append((edge.tonode, depth + 1))
+            if edge.tonode not in visited:
+                visited.add(edge.tonode)
+                queue.append((edge.tonode, depth + 1))
 
-    return visited
+    return result
 def reachablenodes(trip):
     from trips.models import Trip, TripRoute
     reachable = set()
@@ -51,26 +53,43 @@ def reachablenodes(trip):
     )
 
     for route in remainingroutes:
-        nodes = nodeswithinrange(route.node)
+        nodes = nodeswithinrange(route.node, 2)
         reachable.update(nodes)
 
     return reachable
-def findmatchingtrips(pickupnode, dropnode):
-    from trips.models import Trip, TripRoute
+def getremainingnodes(trip):
+    from trips.models import TripRoute
+
+    routes = TripRoute.objects.filter(
+        trip=trip,
+        visited=False
+    ).order_by('order')
+
+    return [r.node for r in routes]
+def getreachablenodes(routenodes):
+    reachable = set()
+
+    for node in routenodes:
+        reachable |= nodeswithinrange(node, 2)
+
+    return reachable
+
+def findmatchingtrips(pickupnode, dropoffnode):
+    from trips.models import Trip
+
     matchingtrips = []
 
     trips = Trip.objects.filter(status='active')
 
     for trip in trips:
-        remainingroutes = TripRoute.objects.filter(
-            trip=trip,
-            visited=False
-        ).order_by('order')
+        remainingnodes = getremainingnodes(trip)
 
-        routenodes = [r.node for r in remainingroutes]
-        if pickupnode in routenodes and dropnode in routenodes:
-            if routenodes.index(pickupnode) < routenodes.index(dropnode):
-                matchingtrips.append(trip)
+        if not remainingnodes:
+            continue
+
+        reachablenodes = getreachablenodes(remainingnodes)
+        if pickupnode in reachablenodes and dropoffnode in reachablenodes:
+            matchingtrips.append(trip)
 
     return matchingtrips
 def calculatefare(trip, pickupnode, dropnode):
@@ -102,41 +121,41 @@ def calculatefare(trip, pickupnode, dropnode):
     newlength = len(newroute)
     detour = newlength - originallength
     
-    active_passengers = []
-    existing_requests = trip.carpooloffer_set.filter(status='accepted')
+    activepassengers = []
+    existingrequests = trip.carpoolofferset.filter(status='accepted')
 
     for req in existing_requests:
-        active_passengers.append({
+        activepassengers.append({
             "pickup": req.request.pickupnode,
             "drop": req.request.dropoffnode
         })
 
 
-    active_passengers.append({
+    activepassengers.append({
         "pickup": pickupnode,
         "drop": dropnode
     })
 
     faresum = 0
-    current_passengers = 0
+    currentpassengers = 0
 
     for i in range(len(newroute) - 1):
-        current_node = newroute[i]
+        currentnode = newroute[i]
 
     
-        for p in active_passengers:
-            if p["pickup"] == current_node:
-                current_passengers += 1
+        for p in activepassengers:
+            if p["pickup"] == currentnode:
+                currentpassengers += 1
 
     
-        for p in active_passengers:
+        for p in activepassengers:
             if p["drop"] == current_node:
-                current_passengers -= 1
+                currentpassengers -= 1
 
-        if current_passengers <= 0:
-            current_passengers = 1
+        if currentpassengers <= 0:
+            currentpassengers = 1
 
-        faresum += 1 / current_passengers
+        faresum += 1 / currentpassengers
 
     fare = PRICEPERHOP * faresum + BASEFEE
 
