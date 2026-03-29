@@ -10,7 +10,7 @@ def findpath(startnode, endnode):
         path = queue.popleft()
         node = path[-1]
 
-        if node == endnode:
+        if node.id == endnode.id:
             return path
 
         if node not in visited:
@@ -18,30 +18,33 @@ def findpath(startnode, endnode):
 
             edges = Edge.objects.filter(fromnode=node)
             for edge in edges:
-                newpath = list(path)
-                newpath.append(edge.tonode)
-                queue.append(newpath)
+                nextnode = edge.tonode
+                if nextnode not in path:
+                    newpath = list(path)
+                    newpath.append(edge.tonode)
+                    queue.append(newpath)
 
     return None
-def nodeswithinrange(startnode, range):
+def nodeswithinrange(startnode, range=2):
     from trips.models import Trip, TripRoute
-    
+
     visited = set()
     queue = deque([(startnode, 0)])
     result = set() 
     while queue:
         node, depth = queue.popleft()
 
-        if depth > range:
+        if dist > range:
             continue
 
         result.add(node)
 
         edges = Edge.objects.filter(fromnode=node)
         for edge in edges:
-            if edge.tonode not in visited:
-                visited.add(edge.tonode)
-                queue.append((edge.tonode, depth + 1))
+            nextnode = edge.tonode
+            if nextnode.id not in visited:
+                visited.add(nextnode.id)
+                queue.append((nextnode, dist + 1))
 
     return result
 def reachablenodes(trip):

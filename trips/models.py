@@ -8,17 +8,17 @@ class Trip(models.Model):
     startnode = models.ForeignKey(Node, related_name='tripstart', on_delete=models.CASCADE)
     endnode = models.ForeignKey(Node, related_name='tripend', on_delete=models.CASCADE)
 
-    maxpassengers = models.IntegerField()
-    currentnode = models.ForeignKey(Node, null=True, blank=True, on_delete=models.CASCADE)
+    maxpassengers = models.IntegerField(default=3)
+    currentnodeindex = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
-    STATUS_CHOICES = [
+    STATUSCHOICES = [
     ('active', 'Active'),
     ('completed', 'Completed'),
     ('cancelled', 'Cancelled'),
     ]
     status = models.CharField(
     max_length=10,
-    choices=STATUS_CHOICES,
+    choices=STATUSCHOICES,
     default='active'
     )
 
@@ -27,26 +27,55 @@ class Trip(models.Model):
         super().save(*args, **kwargs)
 
         if isnew:
-            print("SAVE FUNCTION CALLED")
             path = findpath(self.startnode, self.endnode)
-            print("PATH:", path)
 
-            if path:
-                for index, node in enumerate(path):
-                    TripRoute.objects.create(
-                        trip=self,
-                        node=node,
-                        order=index
-                    )
+            if not path:
+                raise ValueError("No valid path found")
 
+            TripRoute.objects.filter(trip=self).delete()
+
+            for index, node in enumerate(path):
+                TripRoute.objects.create(
+                    trip=self,
+                    node=node,
+                    order=index
+                )
+    def getfullroute(self):
+        return list(
+            self.routenodes.values_list('node_id', flat=True)
+        )
+    def getremainingroute(self):
+        return list(
+            self.routenodes
+            .filter(order__gte=self.currentnodeindex)
+            .values_list('node_id', flat=True)
+        )
+    def updatecurrentnode(self, node_id):
+        route = self.getfullroute()
+
+        if node_id not in route:
+            raise ValueError("Node not in route")
+
+        newindex = route.index(node_id)
+
+        if newindex < self.currentnodeindex:
+            raise ValueError("Cannot go backwards")
+
+        self.currentnodeindex = newindex
+        if self.currentnodeindex == len(route) - 1:
+            self.status = 'completed'
+
+        self.save()
 
 class TripRoute(models.Model):
-    trip = models.ForeignKey(Trip, on_delete=models.CASCADE)
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='routenodes')
     node = models.ForeignKey(Node, on_delete=models.CASCADE)
 
     order = models.IntegerField()   
     visited = models.BooleanField(default=False)
-
+    class Meta:
+        ordering = ['order']
     def __str__(self):
         return f"{self.trip} - {self.node} ({self.order})"
+    
     
