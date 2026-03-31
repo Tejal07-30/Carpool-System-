@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-4">
+
+        <div class="card p-4 shadow">
+            <h3 class="text-center mb-3">Login</h3>
+
+            <form method="POST">
+                {% csrf_token %}
+                <input type="text" name="username" class="form-control mb-2" placeholder="Username">
+                <input type="password" name="password" class="form-control mb-3" placeholder="Password">
+
+                <button class="btn btn-primary w-100">Login</button>
+            </form>
+
+            <hr>
+
+            <a href="{% provider_login_url 'google' %}" class="btn btn-danger w-100">
+                Continue with Google
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-hx7e^i-$5t81^pr#5or_p!7@56qn$p=we)g2i4u_!96euha_so
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -141,5 +141,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+BASE_DIR = Path(__file__).resolve().parent.parents
+TEMPLATES[0]['DIRS'] = [BASE_DIR / "templates"]
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / "static"]
 AUTH_USER_MODEL = 'users.User'
+SOCIALACCOUNT_ADAPTER = "users.adapters.CustomSocialAccountAdapter"
+CSRF_TRUSTED_ORIGINS = [
+    "https://unpoeticised-nonvolubly-bryson.ngrok-free.dev",
+]
