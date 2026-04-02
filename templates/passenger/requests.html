@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2>Create Carpool Request</h2>
+
+<form method="post">
+    {% csrf_token %}
+    
+    <label>Pickup Node ID:</label>
+    <input type="number" name="pickup"><br><br>
+
+    <label>Drop Node ID:</label>
+    <input type="number" name="drop"><br><br>
+
+    <button type="submit">Submit Request</button>
+</form>
+
+{% endblock %}

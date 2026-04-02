@@ -6,15 +6,16 @@ from network.models import Node
 from network.utility import findmatchingtrips, calculatefare
 from carpool.models import CarpoolOffer, CarpoolRequest, Wallet, Transaction
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 
 @api_view(['POST'])
 def updatelocation(request):
     tripid = request.data.get('tripid')
-    nodeid = request.data.get('nodeid')
+    node_id = request.data.get('node_id')
 
     try:
         trip = Trip.objects.get(id=tripid)
-        node = Node.objects.get(id=nodeid)
+        node = Node.objects.get(id=node_id)
     except:
         return Response({'error': 'Invalid trip or node'})
 
@@ -186,13 +187,18 @@ def driverrequests(request):
                 'detour': faredata['detour']
             })
 
-    return Response(data)
-@api_view(['GET'])
+    return render(request, "driver/requests.html", {
+        "requests": data
+    })
+@login_required
 def driveroffers(request):
-    tripid = request.GET.get('tripid')
 
     try:
-        trip = Trip.objects.get(id=tripid)
+        trip = Trip.objects.filter(
+        driver=request.user,
+        status='active'
+        ).first()
+        
     except:
         return Response({'error': 'Invalid trip'})
 

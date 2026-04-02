@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2>Available Offers</h2>
+
+{% for offer in offers %}
+    <div style="border:1px solid black; padding:10px;">
+        <p>Driver: {{ offer.trip.driver }}</p>
+        <p>Fare: {{ offer.fare }}</p>
+
+        <form method="post" action="/accept-driver/{{ offer.id }}/">
+            {% csrf_token %}
+            <button type="submit">Accept</button>
+        </form>
+    </div>
+{% endfor %}
+
+{% endblock %}

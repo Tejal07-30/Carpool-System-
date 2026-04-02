@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2>Wallet</h2>
+
+<p>Balance: {{ balance }}</p>
+
+<h3>Transactions</h3>
+
+{% for t in transactions %}
+    <div>
+        <p>{{ t.type }} - {{ t.amount }}</p>
+        <p>{{ t.description }}</p>
+    </div>
+{% endfor %}
+
+{% endblock %}

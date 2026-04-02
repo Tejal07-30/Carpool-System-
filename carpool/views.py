@@ -55,3 +55,36 @@ def driverdashboard(request):
         'offers': offers,
         'trip': trip
     })
+def createrequest(request):
+    if request.method == 'POST':
+        pickup = Node.objects.get(id=request.POST['pickup'])
+        drop = Node.objects.get(id=request.POST['drop'])
+
+        CarpoolRequest.objects.create(
+            passenger=request.user,
+            pickup=pickup,
+            drop=drop,
+            status='pending'
+        )
+
+        return redirect('/passenger/offers/')
+    return render(request, 'passenger/request.html')
+
+def passengeroffers(request):
+    offers = CarpoolOffer.objects.filter(
+        request__passenger=request.user
+    )
+
+    return render(request, 'passenger/offers.html', {
+        'offers': offers
+    })
+from users.models import Transaction
+
+def walletview(request):
+    wallet = request.user.wallet
+    transactions = Transaction.objects.filter(user=request.user)
+
+    return render(request, 'wallet/wallet.html', {
+        'balance': wallet.balance,
+        'transactions': transactions
+    })

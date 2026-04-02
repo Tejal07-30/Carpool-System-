@@ -140,11 +140,12 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
-
-BASE_DIR = Path(__file__).resolve().parent.parents
-TEMPLATES[0]['DIRS'] = [BASE_DIR / "templates"]
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / "static"]
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 AUTH_USER_MODEL = 'users.User'
 SOCIALACCOUNT_ADAPTER = "users.adapters.CustomSocialAccountAdapter"
 CSRF_TRUSTED_ORIGINS = [

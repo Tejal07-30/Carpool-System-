@@ -1,0 +1,18 @@
+<nav>
+    <a href="/">Home</a>
+
+    {% if user.is_authenticated %}
+        {% if user.role == 'driver' %}
+            <a href="/driver/">Dashboard</a>
+            <a href="/driver/requests/">Requests</a>
+        {% else %}
+            <a href="/passenger/">Find Ride</a>
+            <a href="/passenger/my-rides/">My Rides</a>
+        {% endif %}
+
+        <a href="/wallet/">Wallet</a>
+        <a href="/logout/">Logout</a>
+    {% else %}
+        <a href="/login/">Login</a>
+    {% endif %}
+</nav>
