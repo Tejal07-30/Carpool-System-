@@ -16,6 +16,13 @@
         {% csrf_token %}
         <button>Accept</button>
     </form>
+{% if item.request.status == "pending" %}
+    <form method="POST" action="/passenger/cancel/">
+        {% csrf_token %}
+        <input type="hidden" name="requestid" value="{{ item.request.id }}">
+        <button type="submit">Cancel Request</button>
+    </form>
+{% endif %}
 </div>
 {% empty %}
 <p>No matching requests</p>

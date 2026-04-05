@@ -15,7 +15,7 @@ def updatelocation(request):
 
     try:
         trip = Trip.objects.get(id=tripid)
-        node = Node.objects.get(id=node_id)
+        node = Node.objects.get(id=node_id)#error with nodeid (cannot change)
     except:
         return Response({'error': 'Invalid trip or node'})
 
@@ -57,8 +57,8 @@ def findtrips(request):
         data.append({
             'tripid': trip.id,
             'driver': trip.driver.username,
-            'currentnode': trip.currentnode.name,
-            'available_seats': trip.max_passengers - trip.passengers.count(),
+            'currentnode': trip.getcurrentnode().name,
+            'available_seats': trip.maxpassengers - trip.passengers.count(),
             'fare': faredata['fare'],
             'detour': faredata['detour'],
         })
@@ -339,7 +339,7 @@ def completetrip(request):
     if trip.status != 'active':
         return Response({"error": "Trip not active"})
 
-    offers = trip.carpoolofferset.filter(status='accepted')
+    offers = trip.carpooloffer_set.filter(status='accepted')
 
     for offer in offers:
         passenger = offer.request.passenger

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Create Ride Request</h2>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <label>Pickup:</label>
+    <select name="pickup">
+        {% for node in nodes %}
+            <option value="{{ node.id }}">{{ node }}</option>
+        {% endfor %}
+    </select>
+
+    <label>Dropoff:</label>
+    <select name="dropoff">
+        {% for node in nodes %}
+            <option value="{{ node.id }}">{{ node }}</option>
+        {% endfor %}
+    </select>
+
+    <button type="submit">Request Ride</button>
+</form>
+
+{% endblock %}

@@ -1,19 +1,43 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
 
-<h2>Create Carpool Request</h2>
+<h2>Your Carpool Requests</h2>
 
-<form method="post">
-    {% csrf_token %}
-    
-    <label>Pickup Node ID:</label>
-    <input type="number" name="pickup"><br><br>
+{% for item in data %}
+    <div class="card p-3 mb-3">
 
-    <label>Drop Node ID:</label>
-    <input type="number" name="drop"><br><br>
+        <p>
+            <strong>Route:</strong>
+            {{ item.request.pickupnode }} → {{ item.request.dropoffnode }}
+        </p>
 
-    <button type="submit">Submit Request</button>
-</form>
+        <p><strong>Status:</strong> {{ item.request.status }}</p>
+
+        <h4>Driver Offers</h4>
+
+        {% for offer in item.offers %}
+            <div class="card p-2 mb-2">
+
+                <p>Driver: {{ offer.trip.driver }}</p>
+                <p>Fare: ₹{{ offer.fare }}</p>
+                <p>Detour: {{ offer.detour }}</p>
+                <p>Status: {{ offer.status }}</p>
+
+                {% if offer.status == "pending" %}
+                    <form method="POST" action="/passenger/confirmoffer/">
+                        {% csrf_token %}
+                        <input type="hidden" name="offerid" value="{{ offer.id }}">
+                        <button type="submit">Confirm</button>
+                    </form>
+                {% endif %}
+
+            </div>
+        {% empty %}
+            <p>No offers yet</p>
+        {% endfor %}
+
+    </div>
+{% endfor %}
 
 {% endblock %}

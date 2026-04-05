@@ -1,6 +1,7 @@
 from network.utility import nodeswithinrange
 from network.models import Node
 from network.utility import findpath
+from carpool.models import Transaction
 
 def isrequestvalid(trip, pickupnode, dropnode):
     remainingnodes = trip.getremainingroute()
@@ -70,7 +71,7 @@ def computeoffer(trip, pickupnode, dropnode):
         "detour": detour,
         "fare": fare
     }
-from users.models import Transaction
+
 
 def processtrippayment(trip, passenger, fare):
     passengerwallet = passenger.wallet

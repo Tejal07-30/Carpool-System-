@@ -1,43 +1,41 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
-
-<h2>Driver Dashboard</h2>
+<h2>Your Active Trip</h2>
 
 {% if trip %}
-    <p><strong>Trip ID:</strong> {{ trip.id }}</p>
-{% endif %}
+    <p>{{ trip.source }} → {{ trip.destination }}</p>
 
-<h3>Offers</h3>
+    <h3>Passenger Requests</h3>
 
-{% for offer in offers %}
-<div style="border:1px solid black; padding:10px; margin:10px;">
+    {% for item in requests %}
+    <div class="card shadow-sm p-3 mb-3">
 
-    <p><strong>Passenger:</strong> {{ offer.request.passenger.username }}</p>
-    <p><strong>Pickup:</strong> {{ offer.request.pickupnode.name }}</p>
-    <p><strong>Drop:</strong> {{ offer.request.dropoffnode.name }}</p>
+        <p>{{ item.request.passenger }}</p>
+        <p>{{ item.request.pickupnode }} → {{ item.request.dropoffnode }}</p>
 
-    <p><strong>Detour:</strong> {{ offer.detour }}</p>
-    <p><strong>Fare:</strong> {{ offer.fare }}</p>
+        <p>Fare: ₹{{ item.fare }}</p>
+        <p>Detour: {{ item.detour }}</p>
 
-    <p><strong>Status:</strong> {{ offer.status }}</p>
+        <form method="POST" action="/driver/createoffer/">
+            {% csrf_token %}
+            <input type="hidden" name="requestid" value="{{ item.request.id }}">
+            <input type="hidden" name="fare" value="{{ item.fare }}">
+            <input type="hidden" name="detour" value="{{ item.detour }}">
+            <button class="btn btn-success" type="submit">Offer Ride</button>
+        </form>
 
-    <!-- Accept -->
-    <form method="post" action="/accept-offer/{{ offer.id }}/">
-        {% csrf_token %}
-        <button type="submit">Accept</button>
-    </form>
-
-</div>
-{% empty %}
-<p>No offers available</p>
+    </div>
 {% endfor %}
 
-{% if trip %}
-<form method="post" action="/complete-trip/{{ trip.id }}/">
+{% else %}
+    <p>No active trip</p>
+{% endif %}
+
+<form method="POST" action="{% url 'completetrip' %}">
     {% csrf_token %}
     <button type="submit">Complete Trip</button>
 </form>
-{% endif %}
+
 
 {% endblock %}

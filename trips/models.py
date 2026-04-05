@@ -66,6 +66,16 @@ class Trip(models.Model):
             self.status = 'completed'
 
         self.save()
+    def getcurrentnode(self):
+        route = self.routenodes.order_by('order')
+        return route[self.currentnodeindex].node
+    def getcurrentpassengercount(self):
+        acceptedoffers = CarpoolOffer.objects.filter(
+            trip=self,
+            status='accepted'
+        )
+
+        return acceptedoffers.count()
 
 class TripRoute(models.Model):
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='routenodes')

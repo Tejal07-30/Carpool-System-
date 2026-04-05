@@ -16,11 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.shortcuts import redirect
+
+def home(request):
+    return redirect('/driverdashboard/')
 
 urlpatterns = [
+    path('', home),   
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
-    #path('', home),
-    #path('dashboard/', dashboard),
-    path('accounts/', include('allauth.urls')),
+    #path('accounts/', include('accounts.urls')),
+    path('', include('carpool.urls')),  
 ]

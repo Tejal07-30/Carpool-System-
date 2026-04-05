@@ -25,16 +25,16 @@ def findpath(startnode, endnode):
                     queue.append(newpath)
 
     return None
-def nodeswithinrange(startnode, range=2):
+def nodeswithinrange(startnode, maxrange=2):
     from trips.models import Trip, TripRoute
 
     visited = set()
     queue = deque([(startnode, 0)])
     result = set() 
     while queue:
-        node, depth = queue.popleft()
+        node, dist = queue.popleft()
 
-        if dist > range:
+        if dist > maxrange:
             continue
 
         result.add(node)
@@ -90,11 +90,26 @@ def findmatchingtrips(pickupnode, dropoffnode):
         if not remainingnodes:
             continue
 
+        if trip.getcurrentpassengercount() >= trip.maxpassengers:
+            continue
+        
         reachablenodes = getreachablenodes(remainingnodes)
-        if pickupnode in reachablenodes and dropoffnode in reachablenodes:
-            matchingtrips.append(trip)
+        
+        if pickupnode not in reachablenodes or dropoffnode not in reachablenodes:
+            continue
+
+        routeids = [node.id for node in remainingnodes]
+
+        if pickupnode.id not in routeids or dropoffnode.id not in routeids:
+            continue
+
+        if routeids.index(pickupnode.id) >= routeids.index(dropoffnode.id):
+            continue
+
+        matchingtrips.append(trip)
 
     return matchingtrips
+    
 def calculatefare(trip, pickupnode, dropnode):
     from trips.models import Trip, TripRoute
     PRICEPERHOP = 10
@@ -108,9 +123,9 @@ def calculatefare(trip, pickupnode, dropnode):
     originalnodes = [r.node for r in remainingroutes]
     originallength = len(originalnodes)
 
-    newpath1 = findpath(trip.currentnode, pickupnode)
-    newpath2 = findpath(pickupnode, dropnode)
-    newpath3 = findpath(dropnode, trip.endnode)
+    newpath1 = findpath(trip.getcurrentnode(), pickupnode) or []
+    newpath2 = findpath(pickupnode, dropnode) or []
+    newpath3 = findpath(dropnode, trip.endnode) or []
 
     newroute = []
 
@@ -125,9 +140,9 @@ def calculatefare(trip, pickupnode, dropnode):
     detour = newlength - originallength
     
     activepassengers = []
-    existingrequests = trip.carpoolofferset.filter(status='accepted')
+    existingrequests = trip.carpooloffer_set.filter(status='accepted')
 
-    for req in existing_requests:
+    for req in existingrequests:
         activepassengers.append({
             "pickup": req.request.pickupnode,
             "drop": req.request.dropoffnode
@@ -152,7 +167,7 @@ def calculatefare(trip, pickupnode, dropnode):
 
     
         for p in activepassengers:
-            if p["drop"] == current_node:
+            if p["drop"] == currentnode:
                 currentpassengers -= 1
 
         if currentpassengers <= 0:

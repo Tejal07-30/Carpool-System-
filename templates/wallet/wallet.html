@@ -1,17 +1,25 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
 
-<h2>Wallet</h2>
+<h2>My Wallet</h2>
 
-<p>Balance: {{ balance }}</p>
+<p><strong>Balance:</strong> ₹{{ balance }}</p>
+
+<h3>Add Money</h3>
+<form method="POST" action="/wallet/add/">
+    {% csrf_token %}
+    <input type="number" name="amount" placeholder="Enter amount" required>
+    <button type="submit">Add Money</button>
+</form>
 
 <h3>Transactions</h3>
 
 {% for t in transactions %}
-    <div>
-        <p>{{ t.type }} - {{ t.amount }}</p>
+    <div class="card p-2 mb-2">
+        <p>{{ t.type }} - ₹{{ t.amount }}</p>
         <p>{{ t.description }}</p>
+        <p>{{ t.timestamp }}</p>
     </div>
 {% endfor %}
 

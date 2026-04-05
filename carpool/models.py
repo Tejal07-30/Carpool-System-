@@ -40,8 +40,8 @@ class CarpoolOffer(models.Model):
         ('accepted', 'Accepted'),
         ('rejected', 'Rejected'),
     ]
-    trip = models.ForeignKey(Trip, on_delete=models.CASCADE)
-    request = models.ForeignKey(CarpoolRequest, on_delete=models.CASCADE)
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='offers')
+    request = models.ForeignKey(CarpoolRequest, on_delete=models.CASCADE, related_name='offers')
     fare = models.FloatField(default=0)
     detour = models.IntegerField(default=0)
     status = models.CharField(
