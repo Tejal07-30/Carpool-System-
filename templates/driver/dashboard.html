@@ -8,34 +8,66 @@
 
     <h3>Passenger Requests</h3>
 
-    {% for item in requests %}
-    <div class="card shadow-sm p-3 mb-3">
+    {% if requests %}
+        {% for item in requests %}
+            <div class="card shadow-sm p-3 mb-3">
 
-        <p>{{ item.request.passenger }}</p>
-        <p>{{ item.request.pickupnode }} → {{ item.request.dropoffnode }}</p>
+                <p><strong>{{ item.request.passenger }}</strong></p>
+                <p>{{ item.request.pickupnode }} → {{ item.request.dropoffnode }}</p>
 
-        <p>Fare: ₹{{ item.fare }}</p>
-        <p>Detour: {{ item.detour }}</p>
+                <p>Fare: ₹{{ item.fare }}</p>
+                <p>Detour: {{ item.detour }}</p>
+            {% if item.already_offered %}
+                <button class="btn btn-secondary" disabled>Already Offered</button>
+            {% else %}
+                <form method="POST" action="{% url 'createoffer' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="requestid" value="{{ item.request.id }}">
+                    <input type="hidden" name="fare" value="{{ item.fare }}">
+                    <input type="hidden" name="detour" value="{{ item.detour }}">
+                    <button class="btn btn-success" type="submit">Offer Ride</button>
+                </form>
+            {% endif %}
 
-        <form method="POST" action="/driver/createoffer/">
-            {% csrf_token %}
-            <input type="hidden" name="requestid" value="{{ item.request.id }}">
-            <input type="hidden" name="fare" value="{{ item.fare }}">
-            <input type="hidden" name="detour" value="{{ item.detour }}">
-            <button class="btn btn-success" type="submit">Offer Ride</button>
-        </form>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No nearby passenger requests</p>
+    {% endif %}
 
-    </div>
-{% endfor %}
+    <h3>Your Offers</h3>
 
-{% else %}
-    <p>No active trip</p>
-{% endif %}
+    {% if offers %}
+        {% for offer in offers %}
+            <div class="card shadow-sm p-3 mb-3">
+
+                <p><strong>{{ offer.request.passenger }}</strong></p>
+                <p>Status: {{ offer.status }}</p>
+                <p>Fare: ₹{{ offer.fare }}</p>
+
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No offers created yet</p>
+    {% endif %}
+
+    <h3>Accepted Passengers</h3>
+
+    {% if accepted_offers %}
+        {% for offer in accepted_offers %}
+            <div class="card shadow-sm p-3 mb-3">
+                <p><strong>{{ offer.request.passenger }}</strong></p>
+                <p>{{ offer.request.pickupnode }} → {{ offer.request.dropoffnode }}</p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No passengers yet</p>
+    {% endif %}
 
 <form method="POST" action="{% url 'completetrip' %}">
     {% csrf_token %}
     <button type="submit">Complete Trip</button>
 </form>
-
+{% endif %}
 
 {% endblock %}

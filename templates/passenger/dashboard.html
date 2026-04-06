@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Your Requests</h2>
+
+{% if requests %}
+    {% for req in requests %}
+        <div class="card p-3 mb-3">
+            <p>{{ req.pickupnode }} → {{ req.dropoffnode }}</p>
+            <p>Status: {{ req.status }}</p>
+
+            <a href="{% url 'viewoffers' req.id %}">
+                <button>View Offers</button>
+            </a>
+        </div>
+    {% endfor %}
+{% else %}
+    <p>No requests yet</p>
+{% endif %}
+
+<a href="{% url 'createrequest' %}">
+    <button>Create New Request</button>
+</a>
+
+{% endblock %}

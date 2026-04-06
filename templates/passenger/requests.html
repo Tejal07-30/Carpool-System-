@@ -1,43 +1,41 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block content %}
 
 <h2>Your Carpool Requests</h2>
 
 {% for item in data %}
-    <div class="card p-3 mb-3">
 
-        <p>
-            <strong>Route:</strong>
-            {{ item.request.pickupnode }} → {{ item.request.dropoffnode }}
-        </p>
+<div class="card p-3 mb-3">
 
-        <p><strong>Status:</strong> {{ item.request.status }}</p>
+    <p><b>Route:</b> {{ item.request.pickupnode }} → {{ item.request.dropoffnode }}</p>
+    <p><b>Status:</b> {{ item.request.status }}</p>
 
-        <h4>Driver Offers</h4>
+    <h5>Driver Offers</h5>
 
+    {% if item.offers %}
         {% for offer in item.offers %}
-            <div class="card p-2 mb-2">
+            <div class="border p-2 mb-2">
 
                 <p>Driver: {{ offer.trip.driver }}</p>
                 <p>Fare: ₹{{ offer.fare }}</p>
-                <p>Detour: {{ offer.detour }}</p>
                 <p>Status: {{ offer.status }}</p>
 
                 {% if offer.status == "pending" %}
-                    <form method="POST" action="/passenger/confirmoffer/">
-                        {% csrf_token %}
-                        <input type="hidden" name="offerid" value="{{ offer.id }}">
-                        <button type="submit">Confirm</button>
-                    </form>
+                <form method="POST" action="{% url 'acceptoffer' offer.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-success">Accept</button>
+                </form>
                 {% endif %}
 
             </div>
-        {% empty %}
-            <p>No offers yet</p>
         {% endfor %}
+    {% else %}
+        <p>No offers yet</p>
+    {% endif %}
 
-    </div>
+</div>
+
 {% endfor %}
 
 {% endblock %}

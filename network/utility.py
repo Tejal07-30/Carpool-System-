@@ -109,7 +109,7 @@ def findmatchingtrips(pickupnode, dropoffnode):
         matchingtrips.append(trip)
 
     return matchingtrips
-    
+
 def calculatefare(trip, pickupnode, dropnode):
     from trips.models import Trip, TripRoute
     PRICEPERHOP = 10
@@ -140,7 +140,7 @@ def calculatefare(trip, pickupnode, dropnode):
     detour = newlength - originallength
     
     activepassengers = []
-    existingrequests = trip.carpooloffer_set.filter(status='accepted')
+    existingrequests = trip.offers.filter(status='accepted')
 
     for req in existingrequests:
         activepassengers.append({

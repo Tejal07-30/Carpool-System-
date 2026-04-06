@@ -70,6 +70,8 @@ class Trip(models.Model):
         route = self.routenodes.order_by('order')
         return route[self.currentnodeindex].node
     def getcurrentpassengercount(self):
+        from carpool.models import CarpoolOffer
+
         acceptedoffers = CarpoolOffer.objects.filter(
             trip=self,
             status='accepted'

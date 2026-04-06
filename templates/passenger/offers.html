@@ -4,16 +4,23 @@
 
 <h2>Available Offers</h2>
 
-{% for offer in offers %}
-    <div style="border:1px solid black; padding:10px;">
-        <p>Driver: {{ offer.trip.driver }}</p>
-        <p>Fare: {{ offer.fare }}</p>
+{% if offers %}
+    {% for offer in offers %}
+        <div style="border:1px solid black; padding:10px;">
+            <p>Driver: {{ offer.trip.driver }}</p>
+            <p>Fare: ₹{{ offer.fare }}</p>
+            <p>Status: {{ offer.status }}</p>
 
-        <form method="post" action="/accept-driver/{{ offer.id }}/">
-            {% csrf_token %}
-            <button type="submit">Accept</button>
-        </form>
-    </div>
-{% endfor %}
+            {% if offer.status == "pending" %}
+                <form method="post" action="{% url 'acceptdriver' offer.id %}">
+                    {% csrf_token %}
+                    <button type="submit">Accept</button>
+                </form>
+            {% endif %}
+        </div>
+    {% endfor %}
+{% else %}
+    <p>No offers yet</p>
+{% endif %}
 
 {% endblock %}

@@ -1,27 +1,44 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="container">
 
 <h2>Create Ride Request</h2>
+
+<div class="card">
 
 <form method="POST">
     {% csrf_token %}
 
-    <label>Pickup:</label>
+    <label>Pickup:</label><br>
     <select name="pickup">
         {% for node in nodes %}
-            <option value="{{ node.id }}">{{ node }}</option>
+            <option value="{{ node.id }}">{{ node.name }}</option>
         {% endfor %}
     </select>
 
-    <label>Dropoff:</label>
+    <br><br>
+
+    <label>Dropoff:</label><br>
     <select name="dropoff">
         {% for node in nodes %}
-            <option value="{{ node.id }}">{{ node }}</option>
+            <option value="{{ node.id }}">{{ node.name }}</option>
         {% endfor %}
     </select>
 
+    <br><br>
+    
+    {% if error %}
+    <div class="alert alert-danger">
+        {{ error }}
+    </div>
+    {% endif %}
+
     <button type="submit">Request Ride</button>
+
 </form>
 
+</div>
+
+</div>
 {% endblock %}

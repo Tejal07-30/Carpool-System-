@@ -339,7 +339,7 @@ def completetrip(request):
     if trip.status != 'active':
         return Response({"error": "Trip not active"})
 
-    offers = trip.carpooloffer_set.filter(status='accepted')
+    offers = trip.offers.filter(status='accepted')
 
     for offer in offers:
         passenger = offer.request.passenger

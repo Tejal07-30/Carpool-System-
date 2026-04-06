@@ -49,41 +49,85 @@ def driverdashboard(request):
         status='active'
     ).first()
 
+    if not trip:
+        trip = Trip.objects.filter(driver=request.user).first()
     requests = []
+    offers = []
+    acceptedoffers = []
 
     if trip:
-        allrequests = CarpoolRequest.objects.filter(status='pending')
+       
+        offers = CarpoolOffer.objects.filter(trip=trip)
+
+        acceptedoffers = offers.filter(status="accepted")
+
+        existingoffers = offers.values_list('request_id', flat=True)
+
+        allrequests = CarpoolRequest.objects.filter(
+            status="pending"
+        ).order_by('pickupnodeid', 'dropoffnodeid')
+
+        routenodes = list(trip.routenodes.values_list('node_id', flat=True))
 
         for req in allrequests:
-            matchingtrips = findmatchingtrips(
-                req.pickupnode,
-                req.dropoffnode
-            )
+            alreadyoffered = req.id in existingoffers
+            pickupid = req.pickupnode.id
+            dropid = req.dropoffnode.id
 
-            if trip in matchingtrips:
-                faredata = calculatefare(
-                    trip,
-                    req.pickupnode,
-                    req.dropoffnode
-                )
+            if pickupid == dropid:
+                continue
 
-                requests.append({
-                    "request": req,
-                    "fare": faredata["fare"],
-                    "detour": faredata["detour"]
-                })
+            if pickupid in routenodes and dropid in routenodes:
+
+                pickupindex = routenodes.index(pickupid)
+                dropindex = routenodes.index(dropid)
+
+                if pickupindex < dropindex:
+
+                    faredata = calculatefare(
+                        trip,
+                        req.pickupnode,
+                        req.dropoffnode
+                    )
+
+                    requests.append({
+                        "request": req,
+                        "fare": faredata["fare"],
+                        "detour": faredata["detour"],
+                        "alreadyoffered": alreadyoffered
+                    })
 
     return render(request, "driver/dashboard.html", {
         "trip": trip,
-        "requests": requests
+        "requests": requests,
+        "offers": offers,
+        "acceptedoffers": acceptedoffers
     })
 @login_required
 def createrequest(request):
     if request.method == 'POST':
         pickupid = request.POST.get("pickup")
         dropoffid = request.POST.get("dropoff")
+
+        if not pickupid or not dropoffid:
+            return redirect("createrequest")
+        if pickupid == dropoffid:
+            return redirect("createrequest")
+
         pickup = Node.objects.get(id=pickupid)
         dropoff = Node.objects.get(id=dropoffid)
+
+        existing = CarpoolRequest.objects.filter(
+            passenger=request.user,
+            pickupnode=pickup,
+            dropoffnode=dropoff,
+            status="pending"
+        )
+
+        if existing.exists():
+            return render(request, "passenger/create.html", {
+                "error": "You already have a similar pending request"
+            })
 
         CarpoolRequest.objects.create(
             passenger=request.user,
@@ -92,9 +136,7 @@ def createrequest(request):
             status='pending'
         )
         return redirect("passengerrequests")
-        if pickup == dropoff:
-            return JsonResponse({'error': 'Pickup and drop cannot be same'})
-
+        
     nodes = Node.objects.all()
 
     return render(request, "passenger/createrequest.html", {
@@ -148,15 +190,21 @@ def driverofferreject(request):
     return redirect("driverdashboard")'''
 @login_required
 def passengerrequests(request):
-    userrequests = CarpoolRequest.objects.filter(passenger=request.user)
+    user = request.user
+    requests = CarpoolRequest.objects.filter(passenger=user)
 
     data = []
 
-    for r in userrequests:
-        offers = CarpoolOffer.objects.filter(request=r)
+    if pickupnode.id == dropoffnode.id:
+        return render(request, "passenger/create.html", {
+            "error": "Pickup and Drop cannot be the same"
+        })
+
+    for req in requests:
+        offers = CarpoolOffer.objects.filter(request=req)
 
         data.append({
-            "request": r,
+            "request": req,
             "offers": offers
         })
 
@@ -179,14 +227,15 @@ def confirmoffer(request):
     offer.request.save()
 
     return redirect("passengerrequests")
+
 @require_POST
 @login_required
 def createoffer(request):
-    
+
     requestid = request.POST.get("requestid")
     fare = request.POST.get("fare")
     detour = request.POST.get("detour")
-    
+
     carpoolrequest = CarpoolRequest.objects.get(id=requestid)
 
     trip = Trip.objects.filter(
@@ -194,20 +243,30 @@ def createoffer(request):
         status='active'
     ).first()
 
+    existingoffer = CarpoolOffer.objects.filter(
+        driver=request.user,
+        request=carpool_request
+    )  
+
+    if existingoffer.exists():
+        return redirect("driverdashboard")
+
     if not trip:
-        return JsonResponse({'error': 'No active trip'})
+        return redirect("driverdashboard")
+
     if trip.getcurrentpassengercount() >= trip.maxpassengers:
-        return JsonResponse({'error': 'Trip is full'})
+        return redirect("driverdashboard")
+
+    if CarpoolOffer.objects.filter(trip=trip, request=carpoolrequest).exists():
+        return redirect("driverdashboard")
 
     routeids = list(trip.routenodes.values_list('node_id', flat=True))
-    
-    if carpoolrequest.pickupnode.id not in routeids or carpoolrequest.dropoffnode.id not in routeids:
-        return JsonResponse({'error': 'Invalid route'})
 
-    if routeids.index(carpoolrequest.pickupnode.id) >= routeids.index(carpoolrequest.dropoffnode.id):
-        return JsonResponse({'error': 'Invalid pickup drop order'})
-    
-    if CarpoolOffer.objects.filter(trip=trip, request=carpoolrequest).exists():
+    if (
+        carpoolrequest.pickupnode.id not in routeids or
+        carpoolrequest.dropoffnode.id not in routeids or
+        routeids.index(carpoolrequest.pickupnode.id) >= routeids.index(carpoolrequest.dropoffnode.id)
+    ):
         return redirect("driverdashboard")
 
     CarpoolOffer.objects.create(
@@ -279,7 +338,7 @@ def completetripview(request):
     if not trip:
         return redirect("driverdashboard")
 
-    offers = trip.carpooloffer_set.filter(status='accepted')
+    offers = trip.offers.filter(status='accepted')
 
     for offer in offers:
         passenger = offer.request.passenger
@@ -319,6 +378,8 @@ def completetripview(request):
     return redirect("driverdashboard")
 
 def acceptoffer(request, offerid):
+    from django.http import JsonResponse
+
     offer = CarpoolOffer.objects.get(id=offerid)
     trip = offer.trip
     
@@ -342,3 +403,33 @@ def rejectoffer(request, offerid):
     offer.save()
 
     return redirect("passengerrequests")
+@login_required
+def passengerdashboard(request):
+    requests = CarpoolRequest.objects.filter(passenger=user).order_by('-created_at').distinct()
+
+    return render(request, "passenger/dashboard.html", {
+        "requests": requests
+    })
+@login_required
+def viewoffers(request, requestid):
+    offers = CarpoolOffer.objects.filter(requestid=requestid)
+
+    return render(request, "passenger/offers.html", {
+        "offers": offers
+    })
+@require_POST
+@login_required
+def acceptdriver(request, offerid):
+    offer = CarpoolOffer.objects.get(id=offerid)
+
+    offer.status = "accepted"
+    offer.save()
+
+    CarpoolOffer.objects.filter(
+        request=offer.request
+    ).exclude(id=offer.id).update(status="rejected")
+
+    offer.request.status = "accepted"
+    offer.request.save()
+
+    return redirect("passengerdashboard")
