@@ -11,7 +11,7 @@
     {% csrf_token %}
 
     <label>Pickup:</label><br>
-    <select name="pickup">
+    <select name="pickupnode">
         {% for node in nodes %}
             <option value="{{ node.id }}">{{ node.name }}</option>
         {% endfor %}
@@ -20,14 +20,14 @@
     <br><br>
 
     <label>Dropoff:</label><br>
-    <select name="dropoff">
+    <select name="dropoffnode">
         {% for node in nodes %}
             <option value="{{ node.id }}">{{ node.name }}</option>
         {% endfor %}
     </select>
 
     <br><br>
-    
+
     {% if error %}
     <div class="alert alert-danger">
         {{ error }}

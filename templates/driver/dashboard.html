@@ -4,7 +4,7 @@
 <h2>Your Active Trip</h2>
 
 {% if trip %}
-    <p>{{ trip.source }} → {{ trip.destination }}</p>
+    <p>{{ trip.startnode }} → {{ trip.endnode }}</p>
 
     <h3>Passenger Requests</h3>
 
@@ -20,11 +20,8 @@
             {% if item.already_offered %}
                 <button class="btn btn-secondary" disabled>Already Offered</button>
             {% else %}
-                <form method="POST" action="{% url 'createoffer' %}">
+                <form method="POST" action="{% url 'offerride' item.request.id %}">
                     {% csrf_token %}
-                    <input type="hidden" name="requestid" value="{{ item.request.id }}">
-                    <input type="hidden" name="fare" value="{{ item.fare }}">
-                    <input type="hidden" name="detour" value="{{ item.detour }}">
                     <button class="btn btn-success" type="submit">Offer Ride</button>
                 </form>
             {% endif %}

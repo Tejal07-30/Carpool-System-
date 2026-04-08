@@ -17,12 +17,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
+from carpool.views import login_view
 
 def home(request):
     return redirect('/driverdashboard/')
 
 urlpatterns = [
     path('', home),   
+    path('login/', login_view, name='login'),
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     #path('accounts/', include('accounts.urls')),

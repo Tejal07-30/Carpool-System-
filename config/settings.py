@@ -56,7 +56,8 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 )
-LOGIN_REDIRECT_URL = '/admin/'
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/driverdashboard/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
 ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = False
