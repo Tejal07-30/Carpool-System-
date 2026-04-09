@@ -10,7 +10,7 @@ from network.utility import findmatchingtrips, calculatefare
 
 from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect
-
+from api.views import driverrequests
 def login_view(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -56,7 +56,7 @@ def generateoffersfortrip(trip):
         if alreadyexists:
             continue
         createofferforrequest(trip, req)'''
-
+'''
 @login_required
 def driverdashboard(request):
     trip = Trip.objects.filter(
@@ -153,7 +153,7 @@ def createrequest(request):
     return render(request, "passenger/createrequest.html", {
         "nodes": nodes
     })
-
+'''
 def passengeroffers(request):
     offers = CarpoolOffer.objects.filter(
         request__passenger=request.user
@@ -247,7 +247,7 @@ def confirmoffer(request):
     offer.request.save()
 
     return redirect("passengerrequests")
-
+'''
 @require_POST
 @login_required
 def createoffer(request):
@@ -298,6 +298,7 @@ def createoffer(request):
     )
 
     return redirect("driverdashboard")
+    '''
 @login_required
 def walletview(request):
     wallet = request.user.wallet
@@ -396,7 +397,7 @@ def completetripview(request):
     trip.save()
 
     return redirect("driverdashboard")
-
+'''
 def acceptoffer(request, offerid):
     from django.http import JsonResponse
 
@@ -418,7 +419,7 @@ def acceptoffer(request, offerid):
     offer.request.save()
 
     return redirect("requests")
-
+'''
 def rejectoffer(request, offerid):
     offer = CarpoolOffer.objects.get(id=offerid)
     offer.status = 'rejected'
@@ -427,6 +428,7 @@ def rejectoffer(request, offerid):
     return redirect("passengerrequests")
 @login_required
 def passengerdashboard(request):
+    user = request.user
     requests = CarpoolRequest.objects.filter(passenger=user).order_by('-created_at').distinct()
 
     return render(request, "passenger/dashboard.html", {
@@ -487,7 +489,7 @@ def offerride(request, request_id):
     )
 
     return redirect('driverdashboard')
-
+'''
 @login_required
 def myrequests(request):
     userrequests = CarpoolRequest.objects.filter(passenger=request.user)
@@ -502,6 +504,52 @@ def myrequests(request):
             "offers": offers
         })
 
-    return render(request, "passenger/requests.html", {
+    return render(request, "passenger/myrequests.html", {
         "data": data
+    })'''
+
+#all the new added stuff( need alot correction)
+import requests
+from django.shortcuts import render, redirect
+
+from trips.models import Trip
+
+@login_required
+def driverdashboardpage(request):
+    try:
+        trip = Trip.objects.get(driver=request.user, status='active')
+    except Trip.DoesNotExist:
+        return render(request, "driver/dashboard.html", {
+            "error": "No active trip"
+        })
+
+    response = driverrequests(request._request) 
+
+    return response
+
+def createrequestpage(request):
+    nodes = Node.objects.all()
+    pickup = request.POST.get("pickup")
+    dropoff = request.POST.get("dropoff")
+
+    if pickup == dropoff:
+        return render(request, "passenger/createrequest.html", {
+            "nodes": Node.objects.all(),
+            "error": "Pickup and Drop cannot be same"
+        })
+    if request.method == "POST":
+        import requests
+
+        requests.post(
+            "http://127.0.0.1:8000/api/createrequest/",
+            json={
+                "userid": request.user.id,
+                "pickupnode": request.POST.get("pickup"),
+                "dropoffnode": request.POST.get("dropoff")
+            }
+        )
+        return redirect("/passenger/")
+
+    return render(request, "passenger/createrequest.html", {
+        "nodes": nodes
     })

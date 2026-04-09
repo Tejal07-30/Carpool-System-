@@ -65,7 +65,7 @@ def getremainingnodes(trip):
 
     routes = TripRoute.objects.filter(
         trip=trip,
-        visited=False
+        #visited=False
     ).order_by('order')
 
     return [r.node for r in routes]
@@ -83,14 +83,18 @@ def findmatchingtrips(pickupnode, dropoffnode):
     matchingtrips = []
 
     trips = Trip.objects.filter(status='active')
+    #print("Active trips:", trips)
 
     for trip in trips:
+        #print("\nChecking trip:", trip.id)
         remainingnodes = getremainingnodes(trip)
-
+        #print("Remaining nodes:", [n.id for n in remainingnodes])
         if not remainingnodes:
+            #print("❌ No remaining nodes")
             continue
 
         if trip.getcurrentpassengercount() >= trip.maxpassengers:
+            #print("❌ Trip full")
             continue
         
         reachablenodes = getreachablenodes(remainingnodes)
@@ -109,6 +113,7 @@ def findmatchingtrips(pickupnode, dropoffnode):
         matchingtrips.append(trip)
 
     return matchingtrips
+
 
 def calculatefare(trip, pickupnode, dropnode):
     from trips.models import Trip, TripRoute

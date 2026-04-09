@@ -1,0 +1,85 @@
+def findmatchingtrips(pickupnode, dropoffnode):
+    from trips.models import Trip
+
+    matchingtrips = []
+
+    trips = Trip.objects.filter(status='active')
+    print("Active trips:", trips)
+
+    for trip in trips:
+        print("\nChecking trip:", trip.id)
+        remainingnodes = getremainingnodes(trip)
+        print("Remaining nodes:", [n.id for n in remainingnodes])
+        if not remainingnodes:
+            print("❌ No remaining nodes")
+            continue
+
+        if trip.getcurrentpassengercount() >= trip.maxpassengers:
+            print("❌ Trip full")
+            continue
+        
+        reachablenodes = getreachablenodes(remainingnodes)
+        print("Reachable nodes:", [n.id for n in reachablenodes])
+        
+        reachableids = [node.id for node in reachablenodes]
+
+        if pickupnode.id not in reachableids or dropoffnode.id not in reachableids:
+            print("❌ Pickup not reachable")
+            continue
+        if dropoffnode.id not in reachable_ids:
+            print("❌ Drop not reachable")
+            continue
+
+        routeids = [node.id for node in remainingnodes]
+        print("Route order:", routeids)
+        if pickupnode.id not in routeids or dropoffnode.id not in routeids:
+            continue
+
+        if routeids.index(pickupnode.id) >= routeids.index(dropoffnode.id):
+            print("❌ Wrong order")
+            continue
+
+        matchingtrips.append(trip)
+
+    return matchingtrips
+
+
+
+@api_view(['GET'])
+def driverrequests(request):
+    tripid = request.GET.get('tripid')
+    print("ALL REQUESTS:", list(CarpoolRequest.objects.all()))
+    print("PENDING REQUESTS:", list(CarpoolRequest.objects.filter(status='pending')))
+    if tripid:
+        try:
+            trip = Trip.objects.get(id=tripid)
+        except Trip.DoesNotExist:
+            return render(request, "driver/requests.html", {"requests": []})
+    else:
+        try:
+            trip = Trip.objects.filter(driver=request.user, status='active').first()
+        except Trip.DoesNotExist:
+            return render(request, "driver/requests.html", {"requests": []})
+
+    requests = CarpoolRequest.objects.filter(status='pending')
+
+    data = []
+
+    for req in requests:
+        matchingtrips = findmatchingtrips(req.pickupnode, req.dropoffnode)
+
+        if trip in matchingtrips:
+            faredata = calculatefare(trip, req.pickupnode, req.dropoffnode)
+
+            data.append({
+                'requestid': req.id,
+                'passenger': req.passenger.username,
+                'pickup': req.pickupnode.name,
+                'drop': req.dropoffnode.name,
+                'fare': faredata['fare'],
+                'detour': faredata['detour']
+            })
+
+    return render(request, "driver/requests.html", {
+        "requests": data
+    })

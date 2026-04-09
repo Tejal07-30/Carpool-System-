@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from trips.models import Trip, TripRoute
@@ -7,6 +8,8 @@ from network.utility import findmatchingtrips, calculatefare
 from carpool.models import CarpoolOffer, CarpoolRequest, Wallet, Transaction
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from carpool.services import getdriverdashboard
+
 
 @api_view(['POST'])
 def updatelocation(request):
@@ -72,17 +75,21 @@ def findtrips(request):
 
 @api_view(['POST'])
 def createoffer(request):
-    requestid = request.data.get('requestid')
-    tripid = request.data.get('tripid')
+
+    requestid = request.data.get('requestid') or request.POST.get('requestid')
+    tripid = request.data.get('tripid') or request.POST.get('tripid')
+
+    if not requestid or not tripid:
+        return Response({'error': 'Missing requestid or tripid'})
 
     try:
-        request_obj = CarpoolRequest.objects.get(id=requestid)
+        requestobj = CarpoolRequest.objects.get(id=requestid)
         trip = Trip.objects.get(id=tripid)
     except:
         return Response({'error': 'Invalid request or trip'})
 
     CarpoolOffer.objects.create(
-        request=request_obj,
+        request=requestobj,
         trip=trip,
         status='pending',
     )
@@ -159,14 +166,19 @@ def cancelrequest(request):
     ).update(status='rejected')
 
     return Response({'message': 'Request cancelled'})
-@api_view(['GET'])
+
+@login_required
 def driverrequests(request):
-    tripid = request.GET.get('tripid')
 
     try:
-        trip = Trip.objects.get(id=tripid)
+       trip = Trip.objects.filter(
+            driver=request.user
+        ).order_by('-created_at').first()
     except:
-        return Response({'error': 'Invalid trip'})
+        return render(request, "driver/requests.html", {
+            "requests": [],
+            "error": "No active trip found"
+        })
 
     requests = CarpoolRequest.objects.filter(status='pending')
 
@@ -175,7 +187,10 @@ def driverrequests(request):
     for req in requests:
         matchingtrips = findmatchingtrips(req.pickupnode, req.dropoffnode)
 
-        if trip in matchingtrips:
+        print("TRIP:", trip.id if trip else None)
+        print("MATCHING:", [t.id for t in matchingtrips])
+
+        if True:
             faredata = calculatefare(trip, req.pickupnode, req.dropoffnode)
 
             data.append({
@@ -188,7 +203,8 @@ def driverrequests(request):
             })
 
     return render(request, "driver/requests.html", {
-        "requests": data
+        "requests": data,
+        "trip": trip  
     })
 @login_required
 def driveroffers(request):
@@ -401,3 +417,12 @@ def mytransactions(request):
         })
 
     return Response({"transactions": data})
+
+def driverdashboardapi(request):
+    data = getdriverdashboard(request.user)
+
+    return JsonResponse({
+        "trip": str(data["trip"]),
+        "requests": [r.id for r in data["requests"]],
+        "offers": [o.id for o in data["offers"]],
+    })

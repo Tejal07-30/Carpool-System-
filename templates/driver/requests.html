@@ -3,8 +3,10 @@
 {% block content %}
 <h2>Incoming Requests</h2>
 
-{% for req in data %}
-<div class="card">
+{% for req in requests %}
+<div class="card" style="border:1px solid black; padding:10px; margin:10px;">
+    <p>DEBUG RequestID: {{ req.requestid }}</p>
+    <p>DEBUG TripID: {{ trip.id }}</p>
     <p><b>Passenger:</b> {{ req.passenger }}</p>
     <p><b>Pickup:</b> {{ req.pickup }}</p>
     <p><b>Drop:</b> {{ req.drop }}</p>
@@ -12,17 +14,13 @@
     <p><b>Fare:</b> ₹{{ req.fare }}</p>
     <p><b>Detour:</b> {{ req.detour }}</p>
 
-    <form method="post" action="/driver/accept/{{ req.requestid }}/">
+    <form method="POST" action="/api/createoffer/">
         {% csrf_token %}
-        <button>Accept</button>
+        <input type="hidden" name="requestid" value="{{ req.requestid }}">
+        <input type="hidden" name="tripid" value="{{ trip.id }}">
+        <button type="submit">Offer Ride</button>
     </form>
-{% if item.request.status == "pending" %}
-    <form method="POST" action="/passenger/cancel/">
-        {% csrf_token %}
-        <input type="hidden" name="requestid" value="{{ item.request.id }}">
-        <button type="submit">Cancel Request</button>
-    </form>
-{% endif %}
+
 </div>
 {% empty %}
 <p>No matching requests</p>

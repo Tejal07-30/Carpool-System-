@@ -1,44 +1,35 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Request</title>
+</head>
+<body>
 
-{% block content %}
-<div class="container">
+<h2>Create Carpool Request</h2>
 
-<h2>Create Ride Request</h2>
+{% if error %}
+<p style="color:red;">{{ error }}</p>
+{% endif %}
 
-<div class="card">
-
-<form method="POST">
+<form method="POST" action="/request/create/">
     {% csrf_token %}
 
-    <label>Pickup:</label><br>
-    <select name="pickupnode">
+    <label>Pickup Location:</label><br>
+    <select name="pickup">
         {% for node in nodes %}
             <option value="{{ node.id }}">{{ node.name }}</option>
         {% endfor %}
-    </select>
+    </select><br><br>
 
-    <br><br>
-
-    <label>Dropoff:</label><br>
-    <select name="dropoffnode">
+    <label>Dropoff Location:</label><br>
+    <select name="dropoff">
         {% for node in nodes %}
             <option value="{{ node.id }}">{{ node.name }}</option>
         {% endfor %}
-    </select>
+    </select><br><br>
 
-    <br><br>
-
-    {% if error %}
-    <div class="alert alert-danger">
-        {{ error }}
-    </div>
-    {% endif %}
-
-    <button type="submit">Request Ride</button>
-
+    <button type="submit">Create Request</button>
 </form>
 
-</div>
-
-</div>
-{% endblock %}
+</body>
+</html>

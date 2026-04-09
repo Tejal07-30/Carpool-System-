@@ -2,40 +2,26 @@
 
 {% block content %}
 
-<h2>Your Carpool Requests</h2>
+<h2>Create Request</h2>
 
-{% for item in data %}
+<form method="POST">
+    {% csrf_token %}
 
-<div class="card p-3 mb-3">
-
-    <p><b>Route:</b> {{ item.request.pickupnode }} → {{ item.request.dropoffnode }}</p>
-    <p><b>Status:</b> {{ item.request.status }}</p>
-
-    <h5>Driver Offers</h5>
-
-    {% if item.offers %}
-        {% for offer in item.offers %}
-            <div class="border p-2 mb-2">
-
-                <p>Driver: {{ offer.trip.driver }}</p>
-                <p>Fare: ₹{{ offer.fare }}</p>
-                <p>Status: {{ offer.status }}</p>
-
-                {% if offer.status == "pending" %}
-                <form method="POST" action="{% url 'acceptoffer' offer.id %}">
-                    {% csrf_token %}
-                    <button class="btn btn-success">Accept</button>
-                </form>
-                {% endif %}
-
-            </div>
+    <label>Pickup:</label>
+    <select name="pickupnode">
+        {% for node in nodes %}
+            <option value="{{ node.id }}">{{ node.name }}</option>
         {% endfor %}
-    {% else %}
-        <p>No offers yet</p>
-    {% endif %}
+    </select>
 
-</div>
+    <label>Drop:</label>
+    <select name="dropoffnode">
+        {% for node in nodes %}
+            <option value="{{ node.id }}">{{ node.name }}</option>
+        {% endfor %}
+    </select>
 
-{% endfor %}
+    <button type="submit">Create Request</button>
+</form>
 
 {% endblock %}

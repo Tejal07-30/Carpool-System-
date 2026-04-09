@@ -1,26 +1,15 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Passenger Dashboard</title>
+</head>
+<body>
 
-{% block content %}
+<h2>Passenger Dashboard</h2>
 
-<h2>Your Requests</h2>
+<a href="/request/create/">Create Request</a><br><br>
 
-{% if requests %}
-    {% for req in requests %}
-        <div class="card p-3 mb-3">
-            <p>{{ req.pickupnode }} → {{ req.dropoffnode }}</p>
-            <p>Status: {{ req.status }}</p>
+<a href="/passenger/requests/">View My Requests</a>
 
-            <a href="{% url 'viewoffers' req.id %}">
-                <button>View Offers</button>
-            </a>
-        </div>
-    {% endfor %}
-{% else %}
-    <p>No requests yet</p>
-{% endif %}
-
-<a href="{% url 'createrequest' %}">
-    <button>Create New Request</button>
-</a>
-
-{% endblock %}
+</body>
+</html>
