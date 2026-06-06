@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Passenger Dashboard – RideNode{% endblock %}
+{% block content %}
+
+<div class="topbar">
+  <h5><i class="bi bi-house me-2"></i>Passenger Dashboard</h5>
+  <div class="topbar-right">
+    <span class="text-muted" style="font-size:.8rem;">{{ user.username }}</span>
+    <a href="{% url 'createrequest' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Request Ride</a>
+  </div>
+</div>
+
+<div class="page-title mt-0">Dashboard</div>
+<div class="page-sub">Track your carpool requests</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card blue">
+      <div class="stat-val">{{ requests|length }}</div>
+      <div class="stat-lbl">Total Requests</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card yellow">
+      <div class="stat-val">{{ pendingcount }}</div>
+      <div class="stat-lbl">Pending</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card green">
+      <div class="stat-val">{{ confirmedcount }}</div>
+      <div class="stat-lbl">Confirmed</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card red">
+      <div class="stat-val">{{ cancelledcount }}</div>
+      <div class="stat-lbl">Cancelled</div>
+    </div>
+  </div>
+</div>
+
+
+<div class="card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-list-check me-2"></i>Recent Requests</span>
+    <a href="{% url 'passengerrequests' %}" class="btn btn-outline-secondary btn-sm">View All</a>
+  </div>
+  {% if requests %}
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>#</th><th>From</th><th>To</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for req in requests|slice:":8" %}
+        <tr>
+          <td class="text-muted">#{{ req.id }}</td>
+          <td>{{ req.pickupnode.name }}</td>
+          <td>{{ req.dropoffnode.name }}</td>
+          <td><span class="status-badge badge-status-{{ req.status }}">{{ req.status }}</span></td>
+          <td class="text-muted">{{ req.created_at|date:"d M Y" }}</td>
+          <td>
+            <a href="{% url 'passengerrequests' %}" class="btn btn-outline-primary btn-sm">View Offers</a>
+            {% if req.status == 'pending' %}
+            <form method="POST" action="{% url 'cancelrequest' %}" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="requestid" value="{{ req.id }}">
+              <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Cancel?')">Cancel</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="bi bi-signpost-2"></i>
+    <h5>No requests yet</h5>
+    <p class="text-muted mb-3" style="font-size:.875rem;">Submit a request to find available rides.</p>
+    <a href="{% url 'createrequest' %}" class="btn btn-primary btn-sm">Request a Ride</a>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

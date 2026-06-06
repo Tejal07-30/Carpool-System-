@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Wallet – RideNode{% endblock %}
+{% block content %}
+
+<div class="topbar">
+  <h5><i class="bi bi-wallet2 me-2"></i>My Wallet</h5>
+  <div class="topbar-right">
+    <span class="text-muted" style="font-size:.8rem;">{{ user.username }}</span>
+  </div>
+</div>
+
+<div class="page-title mt-0">Wallet</div>
+<div class="page-sub">Manage your balance and view transaction history</div>
+
+<div class="row g-4 mb-4">
+  
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-cash-coin me-2"></i>Current Balance</div>
+      <div class="card-body">
+        <div style="font-size:2.2rem;font-weight:700;color:#212529;line-height:1;">₹{{ wallet.balance|floatformat:2 }}</div>
+        <div class="text-muted mt-1 mb-4" style="font-size:.8rem;">{{ user.username }}</div>
+        <hr>
+        <div style="font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#495057;margin-bottom:8px;">Top Up Wallet</div>
+        <form method="POST" action="{% url 'addmoney' %}">
+          {% csrf_token %}
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">₹</span>
+            <input type="number" name="amount" class="form-control" min="1" step="1" placeholder="Amount" required>
+            <button type="submit" class="btn btn-success">Add</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+ 
+  <div class="col-md-8">
+    <div class="row g-3">
+      <div class="col-6">
+        <div class="stat-card green">
+          <div class="stat-val">{{ transactions|length }}</div>
+          <div class="stat-lbl">Total Transactions</div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="stat-card red">
+          <div class="stat-val">{{ transactions|length }}</div>
+          <div class="stat-lbl">Transactions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="card">
+  <div class="card-header"><i class="bi bi-receipt me-2"></i>Transaction History</div>
+  {% if transactions %}
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr><th>Type</th><th>Amount</th><th>Description</th><th>Trip</th><th>Date</th></tr>
+      </thead>
+      <tbody>
+        {% for t in transactions %}
+        <tr>
+          <td><span class="status-badge badge-status-{{ t.type }}">{{ t.type }}</span></td>
+          <td class="fw-bold {% if t.type == 'credit' %}text-success{% else %}text-danger{% endif %}">
+            {% if t.type == 'credit' %}+{% else %}-{% endif %}₹{{ t.amount|floatformat:2 }}
+          </td>
+          <td>{{ t.description }}</td>
+          <td class="text-muted">{% if t.trip %}#{{ t.trip_id }}{% else %}—{% endif %}</td>
+          <td class="text-muted">{{ t.timestamp|date:"d M Y, H:i" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="bi bi-credit-card"></i>
+    <h5>No transactions yet</h5>
+    <p class="text-muted mb-0" style="font-size:.875rem;">Top up your wallet to get started.</p>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

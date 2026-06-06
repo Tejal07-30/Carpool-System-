@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}My Rides – RideNode{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>My Completed Rides</h1>
+</div>
+{% with confirmed=requests|dictsortreversed:"created_at" %}
+{% if confirmed %}
+  {% for req in confirmed %}
+    {% if req.status == 'confirmed' %}
+    <div class="card">
+      <div class="flex-between">
+        <span><strong>{{ req.pickupnode.name }}</strong> → <strong>{{ req.dropoffnode.name }}</strong></span>
+        <span class="badge badge-confirmed">Confirmed</span>
+      </div>
+      <div class="text-muted" style="font-size:.8rem;margin-top:.3rem;">{{ req.created_at|date:"d M Y" }}</div>
+    </div>
+    {% endif %}
+  {% endfor %}
+{% else %}
+  <div class="empty"><div class="empty-icon">🚀</div><h3>No completed rides</h3></div>
+{% endif %}
+{% endwith %}
+{% endblock %}

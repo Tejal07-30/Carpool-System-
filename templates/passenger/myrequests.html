@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}My Requests – RideNode{% endblock %}
+{% block content %}
+{% url 'passengerrequests' as req_url %}
+<meta http-equiv="refresh" content="0;url={{ req_url }}">
+{% endblock %}

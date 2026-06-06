@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Create Trip – RideNode{% endblock %}
+{% block content %}
+
+<div class="topbar">
+  <h5><i class="bi bi-plus-circle me-2"></i>Create New Trip</h5>
+  <div class="topbar-right">
+    <a href="{% url 'driverdashboard' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+  </div>
+</div>
+
+<div class="page-title mt-0">Create New Trip</div>
+<div class="page-sub">Select your start and end nodes. The shortest BFS route will be calculated automatically.</div>
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-map me-2"></i>Trip Details</div>
+      <div class="card-body">
+        <form method="POST">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label" style="font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#495057;">Start Node</label>
+            <select name="startnode" class="form-select" required>
+              <option value="">— Select starting point —</option>
+              {% for node in nodes %}
+              <option value="{{ node.id }}">{{ node.name }}{% if node.description %} — {{ node.description }}{% endif %}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#495057;">End Node</label>
+            <select name="endnode" class="form-select" required>
+              <option value="">— Select destination —</option>
+              {% for node in nodes %}
+              <option value="{{ node.id }}">{{ node.name }}{% if node.description %} — {{ node.description }}{% endif %}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" style="font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#495057;">Max Passengers</label>
+            <input type="number" name="maxpassengers" class="form-control" min="1" max="8" value="3">
+          </div>
+          <button type="submit" class="btn btn-primary w-100"><i class="bi bi-car-front me-2"></i>Create Trip</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-info-circle me-2"></i>How it works</div>
+      <div class="card-body" style="font-size:.875rem;color:#495057;line-height:1.8;">
+        <p><i class="bi bi-1-circle text-primary me-2"></i>Select your start and end node from the dropdown.</p>
+        <p><i class="bi bi-2-circle text-primary me-2"></i>The system uses BFS to find the shortest route.</p>
+        <p><i class="bi bi-3-circle text-primary me-2"></i>Passengers within 2 hops of your route can request a ride.</p>
+        <p class="mb-0"><i class="bi bi-4-circle text-primary me-2"></i>Accept requests and complete the trip to receive payment.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

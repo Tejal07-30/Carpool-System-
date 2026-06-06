@@ -1,0 +1,31 @@
+
+<div class="sidebar">
+  <a class="sidebar-brand" href="{% url 'home' %}">Ride<span>Node</span></a>
+
+  {% if user.is_authenticated %}
+    {% if user.role == 'driver' %}
+      <div class="sidebar-section">Driver</div>
+      <a href="{% url 'driverdashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+      <a href="{% url 'createtrip' %}"><i class="bi bi-plus-circle"></i> New Trip</a>
+      <div class="sidebar-section">Account</div>
+      <a href="{% url 'wallet' %}"><i class="bi bi-wallet2"></i> Wallet</a>
+    {% else %}
+      <div class="sidebar-section">Passenger</div>
+      <a href="{% url 'passengerdashboard' %}"><i class="bi bi-house"></i> Dashboard</a>
+      <a href="{% url 'createrequest' %}"><i class="bi bi-plus-circle"></i> Request Ride</a>
+      <a href="{% url 'passengerrequests' %}"><i class="bi bi-list-check"></i> My Requests</a>
+      <div class="sidebar-section">Account</div>
+      <a href="{% url 'wallet' %}"><i class="bi bi-wallet2"></i> Wallet</a>
+    {% endif %}
+    <div class="sidebar-footer">
+      <span class="status-badge badge-status-{{ user.role }}" style="margin-bottom:4px;">{{ user.role }}</span>
+      <strong>{{ user.username }}</strong>
+      <a href="{% url 'logout' %}" style="color:#dc3545;font-size:.8rem;text-decoration:none;">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </a>
+    </div>
+  {% else %}
+    <div class="sidebar-section">Navigation</div>
+    <a href="{% url 'login' %}"><i class="bi bi-box-arrow-in-right"></i> Login</a>
+  {% endif %}
+</div>

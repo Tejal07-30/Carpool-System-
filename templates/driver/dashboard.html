@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block title %}Driver Dashboard – RideNode{% endblock %}
+{% block content %}
+
+<div class="topbar">
+  <h5><i class="bi bi-speedometer2 me-2"></i>Driver Dashboard</h5>
+  <div class="topbar-right">
+    <span class="text-muted" style="font-size:.8rem;">{{ user.username }}</span>
+    <a href="{% url 'createtrip' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>New Trip</a>
+  </div>
+</div>
+
+<div class="page-title mt-0">Dashboard</div>
+<div class="page-sub">Manage your trips and carpool requests</div>
+
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card blue">
+      <div class="stat-val">{% if activetrip %}1{% else %}0{% endif %}</div>
+      <div class="stat-lbl">Active Trip</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card green">
+      <div class="stat-val">{{ matchablerequests|length }}</div>
+      <div class="stat-lbl">New Requests</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card yellow">
+      <div class="stat-val">{{ pendingoffers|length }}</div>
+      <div class="stat-lbl">Pending Offers</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card red">
+      <div class="stat-val">{{ acceptedoffers|length }}</div>
+      <div class="stat-lbl">Passengers On Board</div>
+    </div>
+  </div>
+</div>
+
+{% if activetrip %}
+
+<div class="card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-car-front me-2"></i>Active Trip #{{ activetrip.id }}</span>
+    <span class="status-badge badge-status-active">Active</span>
+  </div>
+  <div class="card-body">
+    <div class="row g-3 mb-3">
+      <div class="col-md-7">
+        <div class="text-muted mb-1" style="font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;font-weight:600;">Route</div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px;">
+          {% for tr in activetrip.routenodes.all %}
+            {% if tr.visited %}
+              <span class="route-node visited">{{ tr.node.name }}</span>
+            {% elif tr.node == activetrip.getcurrentnode %}
+              <span class="route-node current">{{ tr.node.name }}</span>
+            {% else %}
+              <span class="route-node">{{ tr.node.name }}</span>
+            {% endif %}
+            {% if not forloop.last %}<span class="route-arrow">›</span>{% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-md-5">
+        <div class="text-muted mb-1" style="font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;font-weight:600;">Status</div>
+        <div style="font-size:.875rem;">
+          <div>Current: <strong>{{ activetrip.getcurrentnode.name }}</strong></div>
+          <div>Passengers: <strong>{{ activetrip.getcurrentpassengercount }} / {{ activetrip.maxpassengers }}</strong></div>
+          <div>Destination: <strong>{{ activetrip.endnode.name }}</strong></div>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="border rounded p-3 mb-3" style="background:#f8f9fa;">
+      <div style="font-size:.8rem;font-weight:600;color:#495057;margin-bottom:8px;"><i class="bi bi-geo-alt me-1"></i>Update Current Position</div>
+      <form method="POST" action="{% url 'advancenode' activetrip.id %}" class="d-flex gap-2 align-items-end">
+        {% csrf_token %}
+        <div class="flex-grow-1">
+          <select name="nodeid" class="form-select form-select-sm">
+            {% for tr in activetrip.routenodes.all %}
+              <option value="{{ tr.node.id }}" {% if tr.visited %}disabled{% endif %}>
+                {{ tr.node.name }}{% if tr.visited %} (visited){% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-outline-secondary btn-sm">Update</button>
+      </form>
+    </div>
+
+    <div class="d-flex gap-2">
+      <form method="POST" action="{% url 'completetrip' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check-circle me-1"></i>Complete &amp; Pay</button>
+      </form>
+      <form method="POST" action="{% url 'canceltrip' activetrip.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Cancel this trip?')"><i class="bi bi-x-circle me-1"></i>Cancel Trip</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+{% if acceptedoffers %}
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-people me-2"></i>Confirmed Passengers</div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Passenger</th><th>Pickup</th><th>Dropoff</th><th>Fare</th><th>Detour</th></tr></thead>
+      <tbody>
+        {% for offer in acceptedoffers %}
+        <tr>
+          <td><i class="bi bi-person me-1 text-muted"></i>{{ offer.request.passenger.username }}</td>
+          <td>{{ offer.request.pickupnode.name }}</td>
+          <td>{{ offer.request.dropoffnode.name }}</td>
+          <td><strong class="text-success">₹{{ offer.fare }}</strong></td>
+          <td>{{ offer.detour }} hops</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+
+{% if pendingoffers %}
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-hourglass-split me-2"></i>Offers Waiting for Passenger Response</div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Passenger</th><th>Pickup</th><th>Dropoff</th><th>Fare</th><th>Detour</th></tr></thead>
+      <tbody>
+        {% for offer in pendingoffers %}
+        <tr>
+          <td>{{ offer.request.passenger.username }}</td>
+          <td>{{ offer.request.pickupnode.name }}</td>
+          <td>{{ offer.request.dropoffnode.name }}</td>
+          <td>₹{{ offer.fare }}</td>
+          <td>{{ offer.detour }} hops</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-inbox me-2"></i>Incoming Requests on Your Route</div>
+  {% if matchablerequests %}
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Passenger</th><th>Pickup</th><th>Dropoff</th><th>Fare</th><th>Detour</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for item in matchablerequests %}
+        <tr>
+          <td>{{ item.request.passenger.username }}</td>
+          <td>{{ item.request.pickupnode.name }}</td>
+          <td>{{ item.request.dropoffnode.name }}</td>
+          <td><strong class="text-success">₹{{ item.fare }}</strong></td>
+          <td>{{ item.detour }} hops</td>
+          <td>
+            {% if item.already_offered %}
+              <span class="status-badge badge-status-pending">Offer Sent</span>
+            {% else %}
+            <form method="POST" action="{% url 'offerride' item.request.id %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-primary btn-sm">Offer Ride</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="bi bi-search"></i>
+    <h5>No matching requests</h5>
+    <p class="text-muted mb-0" style="font-size:.875rem;">No pending passenger requests match your route right now.</p>
+  </div>
+  {% endif %}
+</div>
+
+{% else %}
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="empty-state">
+      <i class="bi bi-car-front"></i>
+      <h5>No Active Trip</h5>
+      <p class="text-muted mb-3" style="font-size:.875rem;">You don't have any active trip. Create one to start accepting passengers.</p>
+      <a href="{% url 'createtrip' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Create Trip</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
+{% if pasttrips %}
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-clock-history me-2"></i>Past Trips</div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>#</th><th>Route</th><th>Passengers</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody>
+        {% for trip in pasttrips %}
+        <tr>
+          <td class="text-muted">#{{ trip.id }}</td>
+          <td>{{ trip.startnode.name }} <i class="bi bi-arrow-right text-muted"></i> {{ trip.endnode.name }}</td>
+          <td>{{ trip.getcurrentpassengercount }} / {{ trip.maxpassengers }}</td>
+          <td><span class="status-badge badge-status-{{ trip.status }}">{{ trip.status }}</span></td>
+          <td class="text-muted">{{ trip.created_at|date:"d M Y" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

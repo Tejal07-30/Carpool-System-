@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}My Offers – RideNode{% endblock %}
+{% block content %}
+{# This view is no longer used. Offers are shown inside passenger/requests.html #}
+{% url 'passengerrequests' as req_url %}
+<meta http-equiv="refresh" content="0;url={{ req_url }}">
+{% endblock %}

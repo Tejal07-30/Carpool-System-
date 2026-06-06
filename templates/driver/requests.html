@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Incoming Requests – RideNode{% endblock %}
+{% block content %}
+{% url 'driverdashboard' as dash_url %}
+<meta http-equiv="refresh" content="0;url={{ dash_url }}">
+{% endblock %}
