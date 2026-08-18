@@ -1,4 +1,4 @@
- # Carpool System (DVM Project)
+ # Carpool System
 
 A backend system designed to make daily commuting easier by connecting riders and drivers through shared routes.
 
